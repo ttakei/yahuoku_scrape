@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="jquery.csv2table.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+$(function(){
+    var check_input_scrape = function() {
+        var required = "form#scrape .required";
+        var result = true;
+        $(required).each(function(){
+            if (!$(this).val()) {
+                var id = $(this).attr('id');
+                var label = $("label[for='"+id+"']").text();
+                window.alert(label+"を入力してください");
+                result = false;
+                return;
+            }
+        });
+        return result;
+    };
+
+    var load_jobs = function() {
+        $.when(
+            $('#jobs').csv2table('jobs.php')
+        ).done(function() {
+            // 削除ボタン
+            $(document).on("click", "#jobs .del", (function(){
+                var jobid = $(this).attr('id');
+                var fd = new FormData();
+                fd.append("jobid", jobid);
+                var post_data = {
+                    type : "POST",
+                    dataType : "text",
+                    data : fd,
+                    processData : false,
+                    contentType : false
+                };
+                $.ajax(
+                    "delete.php", post_data
+                ).done(function(text){
+                    window.alert("削除しました");
+                    load_jobs();
+                });
+                return false;
+            }));
+        });
+    };
+
+    $('form#scrape #submit').click(function(){
+        if (!check_input_scrape()) {
+            return false;
+        }
+
+        var fd = new FormData();
+        fd.append("urls", $("#urls").val());
+        var post_data = {
+            type : "POST",
+            dataType : "text",
+            data : fd,
+            processData : false,
+            contentType : false
+        };
+        $.ajax(
+            "scrape.php", post_data
+        ).done(function(text){
+            // window.alert(text);
+        });
+        window.alert("ジョブを登録しました");
+        load_jobs();
+        return false;
+    });
+
+    load_jobs();
+});
+</script>
+<h2>スクレイプ登録</h2>
+<form id="scrape" method="post">
+
+<h3><label for="urls">URLリスト</label></h3>
+<p>
+<textarea class="required" id="urls" name="urls" rows="25" cols="100"></textarea>
+</p>
+<p>
+<input type="submit" name="submit" id="submit" value="実行" />
+</p>
+</form>
+<hr />
+
+<h2>スクレイプ結果</h2>
+<p id="jobs"></p>
+</body>
+</html>
